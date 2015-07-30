@@ -1,0 +1,20 @@
+{
+    "name": "entere/wxpay",
+    "description": "weixin jsapi",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "entere",
+            "email": "entere@126.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=5.4.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "Entere\\Wxpay\\Jsapi\\": "src/Jsapi"
+        }
+    }   
+}
