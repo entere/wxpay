@@ -16,6 +16,18 @@ class SdkPayment
 	private $notify_url;
 	private $prepay_id;
 	private $log;
+	private $body;
+	private $attach;
+	private $detail;
+	private $fee_type;
+	private $out_trade_no;
+	private $total_fee;
+	private $goods_tag;
+	private $product_id;
+	private $time_start;
+	private $time_expire;
+	private $trade_type;
+	private $openid;
 	protected $values = array();
 	protected $values_js = array();
 	protected $values_re = array();
@@ -75,6 +87,12 @@ class SdkPayment
 		return $this;
 	}
 	
+	public function setReportLevenl($report_levenl)
+	{
+		$this->report_levenl = $report_levenl;
+		return $this;
+	}
+	
 	/**
 	 * 获取用户的openid
 	 * @return 用户的openid
@@ -84,7 +102,7 @@ class SdkPayment
 		//通过code获得openid
 		if (!isset($_GET['code'])) {
 			//触发微信返回code码
-			$base_url = urlencode('http://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'] . $_SERVER['QUERY_STRING']);
+			$base_url = urlencode('http://' . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'] . '?' . $_SERVER['QUERY_STRING']);
 			$baseurl = rtrim($base_url, "%2F");
 			$url = $this->__createOauthUrlForCode($baseurl);
 			Header("Location: $url");
@@ -183,6 +201,8 @@ class SdkPayment
 	public function setBody($value)
 	{
 		$this->values['body'] = $value;
+		$this->body = $value;
+		return $this;
 	}
 	
 	/**
@@ -191,6 +211,28 @@ class SdkPayment
 	public function setAttach($value)
 	{
 		$this->values['attach'] = $value;
+		$this->attach = $value;
+		return $this;
+	}
+	
+	/**
+	 * 设置商品名称明细列表
+	 **/
+	public function setDetail($value)
+	{
+		$this->values['detail'] = $value;
+		$this->detail = $value;
+		return $this;
+	}
+	
+	/**
+	 * 符合ISO 4217标准的三位字母代码，默认人民币：CNY，其他值列表详见货币类型
+	 **/
+	public function setFeeType($value)
+	{
+		$this->values['fee_type'] = $value;
+		$this->fee_type = $value;
+		return $this;
 	}
 	
 	/**
@@ -199,6 +241,8 @@ class SdkPayment
 	public function setOutTradeNo($value)
 	{
 		$this->values['out_trade_no'] = $value;
+		$this->out_trade_no = $value;
+		return $this;
 	}
 	
 	/**
@@ -207,6 +251,8 @@ class SdkPayment
 	public function setTotalFee($value)
 	{
 		$this->values['total_fee'] = $value;
+		$this->total_fee = $value;
+		return $this;
 	}
 	
 	/**
@@ -215,6 +261,8 @@ class SdkPayment
 	public function setTimeStart($value)
 	{
 		$this->values['time_start'] = $value;
+		$this->time_start = $value;
+		return $this;
 	}
 	
 	/**
@@ -223,6 +271,8 @@ class SdkPayment
 	public function setTimeExpire($value)
 	{
 		$this->values['time_expire'] = $value;
+		$this->time_expire = $value;
+		return $this;
 	}
 	
 	/**
@@ -231,6 +281,18 @@ class SdkPayment
 	public function setGoodsTag($value)
 	{
 		$this->values['goods_tag'] = $value;
+		$this->goods_tag = $value;
+		return $this;
+	}
+	
+	/**
+	 * 设置商品ID，此id为二维码中包含的商品ID，商户自行定义。
+	 **/
+	public function setProductId($value)
+	{
+		$this->values['product_id'] = $value;
+		$this->product_id = $value;
+		return $this;
 	}
 	
 	/**
@@ -239,6 +301,8 @@ class SdkPayment
 	public function setNotifyUrl($value)
 	{
 		$this->values['notify_url'] = $value;
+		$this->notify_url = $value;
+		return $this;
 	}
 	
 	/**
@@ -247,6 +311,8 @@ class SdkPayment
 	public function setTradeType($value)
 	{
 		$this->values['trade_type'] = $value;
+		$this->trade_type = $value;
+		return $this;
 	}
 	
 	/**
@@ -255,6 +321,8 @@ class SdkPayment
 	public function setOpenid($value)
 	{
 		$this->values['openid'] = $value;
+		$this->openid = $value;
+		return $this;
 	}
 	
 	/**
@@ -428,7 +496,6 @@ class SdkPayment
 		//签名步骤二：在string后加入KEY
 		$string = $string . "&key=" . $this->key;
 		//签名步骤三：MD5加密
-		$this->log(serialize($this->values));
 		$string = md5($string);
 		//签名步骤四：所有字符转为大写
 		$result = strtoupper($string);
@@ -657,7 +724,7 @@ class SdkPayment
 		if (array_key_exists("device_info", $data)) {
 			$this->setDeviceInfo($data["device_info"]);
 		}
-		$this->report();
+		$this->log($this->report()."测速上报");
 	}
 	
 	/**
@@ -734,6 +801,7 @@ class SdkPayment
 	public function report($timeOut = 1)
 	{
 		$url = "https://api.mch.weixin.qq.com/payitil/report";
+		$this->setUserIp($_SERVER['REMOTE_ADDR']);//终端ip
 		//检测必填参数
 		if (!$this->isInterfaceUrlSet()) {
 			$this->log("report:接口URL，缺少必填参数interface_url！");
@@ -752,7 +820,6 @@ class SdkPayment
 		}
 		$this->setAppidRe($this->appid);//公众账号ID
 		$this->setMchidRe($this->mchid);//商户号
-		$this->setUserIp($_SERVER['REMOTE_ADDR']);//终端ip
 		$this->setTime(date("YmdHis"));//商户上报时间
 		$this->setNonceStrRe(self::getNonceStr());//随机字符串
 	
@@ -760,8 +827,7 @@ class SdkPayment
 		$xml = $this->toXmlRe();
 	
 		$start_time_stamp = self::getMillisecond();//请求开始时间
-		//$response = self::postXmlCurl($xml, $url, false, $timeOut);
-		$response = self::postXmlCurl($xml, $url, true, $timeOut);
+		$response = self::postXmlCurl($xml, $url, false, $timeOut);
 		return $response;
 	}
 	
@@ -868,7 +934,6 @@ class SdkPayment
 		//签名步骤二：在string后加入KEY
 		$string = $string . "&key=" . $this->key;
 		//签名步骤三：MD5加密
-		$this->log(serialize($this->values_re));
 		$string = md5($string);
 		//签名步骤四：所有字符转为大写
 		$result = strtoupper($string);
@@ -933,7 +998,6 @@ class SdkPayment
 		$this->setSignType("MD5");
 		$this->setPaySign($this->makeSignJs());
 		$parameters =json_encode($this->getValuesJs());
-		$this->log($parameters);
 		return $parameters;
 	}
 	
@@ -997,7 +1061,6 @@ class SdkPayment
 		//签名步骤二：在string后加入KEY
 		$string = $string . "&key=" . $this->key;
 		//签名步骤三：MD5加密
-		$this->log(serialize($this->values_js));
 		$string = md5($string);
 		//签名步骤四：所有字符转为大写
 		$result = strtoupper($string);
